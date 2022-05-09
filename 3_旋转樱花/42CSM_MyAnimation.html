@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html>
+	<head><!--文档头部-->
+		<meta charset = "utf-8">
+		<title>3_旋转樱花</title>
+	</head>
+	
+	<body><!--文档主体-->
+		<canvas id="webgl" width="512" height="512">
+		sorry,浏览器不支持HTML5的canvas元素！<!--出错显示此句-->
+		</canvas>
+		</Br><!--换行-->
+		<div>
+		<button id = "IncSpeed">加速</button>
+		<button id = "DecSpeed">减速</button>
+		<button id = "Large">花放大</button>
+		<button id = "Small">花缩小</button>
+		颜色：
+		<select id = "ColorMenu" size = "3">
+			<option value = "0">纯白</option>
+			<option value = "1">樱粉</option>
+			<option value = "2">薄荷绿</option>
+			<option value = "3">天蓝</option>
+		</select>
+		<button id = "ExChange">更换绘制方式</button>
+		</Br>
+		减速到0时暂停,设置放大缩小到某一数值将不再放大缩小
+		</div>
+		<!--顶点Shader程序-->
+		<script id="vertex-shader" type="x-shader/x-vertex">
+		attribute vec2 a_Position;//顶点位置属性
+		uniform mat4 u_matProj;//投影矩阵
+		uniform float u_Angle;//旋转角度
+		void main(){
+			vec4 pos = vec4(a_Position, 0, 1);//模型坐标系齐次坐标
+			float rad = radians(u_Angle);//角度转弧度
+			//实现旋转
+			pos.x = a_Position.x * cos(rad) - a_Position.y * sin(rad);
+			pos.y = a_Position.x * sin(rad) + a_Position.y * cos(rad);//jian-
+			gl_Position = u_matProj * pos;//计算裁剪坐标系下坐标
+		}
+		</script>
+		<!--片元Shader程序-->
+		<script id="fragment-shader" type="x-shader/x-fragment">
+		precision mediump float;//浮点数精度为中等
+		uniform vec3 u_Color;//片元颜色
+		void main(){
+			gl_FragColor = vec4(u_Color, 1.0);//指定片元颜色(白1111.0)
+		}
+		</script>
+		<!--以下三辅助程序编写的三个JavaScrip程序-->
+		<script type="text/javascript" src="./Common/webgl-utils.js"></script>
+		<script type="text/javascript" src="./Common/initShaders.js"></script>
+		<script type="text/javascript" src="./Common/MV.js"></script>
+		<!--主程序，JS文件名修改为与本HTML文件名一致-->
+		<script type="text/javascript" src="42CSM_MyAnimation.js"></script>
+	</body>
+</html>
