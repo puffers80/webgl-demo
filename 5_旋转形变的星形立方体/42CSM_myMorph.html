@@ -1,0 +1,53 @@
+<!DOCTYPE html>	<!--表示文档类型为HTML文档-->
+<html>
+	<head><!--文档头部-->
+		<meta charset = "utf-8">
+		<title>5_旋转的形变星形立方体</title>
+	</head>
+	
+	<body><!--文档主体-->
+		<p>鼠标左键绕x轴旋转，中键绕y轴旋转，右键绕z轴旋转</p>
+		<canvas id="webgl" width="512" height="512">
+		对不起，你的浏览器不支持HTML5的canvas元素！<!--出错时显示这句话-->
+		</canvas>
+
+		<!--顶点Shader程序-->
+		<script id="vertex-shader" type="x-shader/x-vertex">
+			precision mediump float;
+			attribute vec3 a_Position;	// 输入三维顶点坐标
+			uniform mat4 u_MVPMatrix;	// 模视投影矩阵
+			uniform float u_Time; //时间 [0 2]变化
+			uniform float u_MinDist;//跟片元shader相同
+			varying float v_Dist; //当前顶点到正方体中心的距离
+			void main(){
+			float a = u_Time;
+			if(u_Time>1.0) a = 2.0 - u_Time; 
+			// 计算裁剪坐标系下坐标
+			v_Dist = length(a_Position);
+			float newLength = mix(v_Dist, u_MinDist, a);
+			float zoom = newLength / v_Dist;//确定缩放系数
+			gl_Position = u_MVPMatrix * vec4(a_Position*zoom, 1.0);	
+			}
+			</script>
+			<!--片元Shader程序-->
+			<script id="fragment-shader" type="x-shader/x-fragment">
+			precision mediump float;
+			uniform float u_Time; 
+			varying float v_Dist;  
+			uniform float u_MinDist;
+			uniform float u_MaxDist;
+			void main(){
+				gl_FragColor =mix(vec4(1,1,0,1),
+				vec4(0.6,0.2,0.2,1),
+				(v_Dist -u_MinDist)/(u_MaxDist-u_MinDist)
+				); // 黄色
+			}
+			</script>
+		<!--下面是辅助我们进行程序编写的3个JavaScript程序-->
+		<script type="text/javascript" src="./Common/webgl-utils.js"></script>
+		<script type="text/javascript" src="./Common/initShaders.js"></script>
+		<script type="text/javascript" src="./Common/MV.js"></script>
+		<!--主程序-->
+		<script type="text/javascript" src="42CSM_myMorph.js"></script>
+	</body>
+</html>

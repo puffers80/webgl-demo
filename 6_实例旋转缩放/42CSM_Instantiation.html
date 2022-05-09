@@ -1,0 +1,56 @@
+<!DOCTYPE html>	<!--表示文档类型为HTML文档-->
+<html>
+	<head><!--文档头部-->
+		<!--使用UTF-8字符编码，无此句在某些浏览器会出现乱码-->
+		<meta charset = "utf-8">
+		<!--文档标题，会显示在网页标题栏-->
+		<title>6_实例旋转缩放</title>
+	</head>
+	
+	<body><!--文档主体-->
+		<!--绘图区域的id，以及宽度和高度，用WebGL绘制的图形将显示在该canvas中-->
+		<canvas id="webgl" width="512" height="512">
+		对不起，你的浏览器不支持HTML5的canvas元素！<!--出错时显示这句话-->
+		</canvas>
+		
+		<!--以下为用到的shader程序和JavaScript程序，程序类型由type属性决定，
+		顶点Shader程序和片元Shader程序有id，因为在JavaScript程序中需要对其
+		进行访问，而JavaScript程序无id-->
+		
+		<!--顶点Shader程序-->
+		<script id="vertex-shader" type="x-shader/x-vertex">
+		attribute vec2 a_Position;	// 输入二维顶点坐标
+		uniform mat4 u_MVPMatrix;	// 模视投影矩阵
+		varying float v_Dist;		// 当前顶点到正方形中心的距离
+		void main(){
+			// 因为正方形中心即为原点，到正方形中心的距离即为到原点的距离
+			// 也即从原点指向当前顶点所构成向量的长度
+			v_Dist = length(a_Position);
+	
+			// 计算裁剪坐标系下坐标
+			gl_Position = u_MVPMatrix * vec4(a_Position, 0.0, 1.0);	
+		}
+		</script>
+		<!--片元Shader程序-->
+		<script id="fragment-shader" type="x-shader/x-fragment">
+		precision mediump float;	// 浮点数精度为中等
+		varying float v_Dist;		// 当前片元到立方体中心的距离
+		uniform float u_MaxDist;	// 正方形内一点到正方形中心的最大距离
+		uniform vec4 u_StartColor; 	// 中心点颜色
+		uniform vec4 u_EndColor;	// 四个角的颜色
+		void main(){
+			gl_FragColor = mix(
+				u_StartColor,		// 初始值
+				u_EndColor,			// 终止值
+				v_Dist / u_MaxDist  // 根据距离确定的[0,1]范围参数
+				);
+		}
+		</script>
+		<!--下面是辅助我们进行程序编写的3个JavaScript程序-->
+		<script type="text/javascript" src="./Common/webgl-utils.js"></script>
+		<script type="text/javascript" src="./Common/initShaders.js"></script>
+		<script type="text/javascript" src="./Common/MV.js"></script>
+		<!--主程序-->
+		<script type="text/javascript" src="42CSM_Instantiation.js"></script>
+	</body>
+</html>
