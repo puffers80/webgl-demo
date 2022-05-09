@@ -1,0 +1,149 @@
+<!DOCTYPE html>	<!--表示文档类型为HTML文档-->
+<html>
+	<head><!--文档头部-->
+		<!--使用UTF-8字符编码，无此句在某些浏览器会出现乱码-->
+		<meta charset = "utf-8">
+		<!--文档标题，会显示在网页标题栏-->
+		<title>10_光照与材质</title>
+	</head>
+	
+	<body><!--文档主体-->
+		<p>方向键控制视点，默认顶点光照计算</p>
+		<button id="VertexButton">顶点光照</button>
+		<button id="FragmentButton">片元光照</button>
+		材质:
+		<select id="material" >
+			<option value="0">黄铜</option>
+			<option value="1">灰银</option>
+			<option value="2">桃红</option>
+			<option value="3">绿柳</option>
+		</select>
+		</Br>
+		<!--绘图区域的id，以及宽度和高度，用WebGL绘制的图形将显示在该canvas中-->
+		<canvas id="webgl" width="600" height="600">
+		对不起，你的浏览器不支持HTML5的canvas元素！<!--出错时显示这句话-->
+		</canvas>
+		
+		<!--size="1"以下为用到的shader程序和JavaScript程序，程序类型由type属性决定，
+		顶点Shader程序和片元Shader程序有id，因为在JavaScript程序中需要对其
+		进行访问，而JavaScript程序无id-->
+		
+		<!--顶点光照计算-->
+		<!--顶点Shader程序-->
+		<script id="vertex-vShading" type="x-shader/x-vertex">
+		attribute vec3 a_Position;	//输入三维顶点坐标
+		attribute vec3 a_Normal;	//顶点法向量
+		varying vec3 v_Color;		//顶点光照计算得到的顶点颜色
+		uniform vec4 u_LightPosition;//光源位置/方向
+		uniform float u_Shininess;	//高光系数
+		//光源亮度与材质反射系数的乘积
+		uniform vec3 u_AmbientProduct, u_DiffuseProduct, u_SpecularProduct;
+		uniform mat4 u_matModel;	//模型矩阵
+		uniform mat4 u_matView;		//观察矩阵
+		uniform mat4 u_Projection;	//模型矩阵
+		uniform mat3 u_NormalMat;	//法向变换矩阵
+		void main(){
+			mat4 ModelView = u_matView * u_matModel;//模视矩阵
+			vec3 pos = (ModelView * vec4(a_Position, 1.0)).xyz;
+			vec3 L;//光源方向向量(顶点指向光源)
+			if(u_LightPosition.w != 0.0)//近距离光源
+				L = normalize((u_matView * u_LightPosition).xyz - pos);
+			else						//远距离光源
+				L = normalize(u_matView * u_LightPosition).xyz;
+			//观察者方向向量(顶点指向观察者 观察坐标系原点)
+			vec3 E = normalize(-pos);
+			vec3 H = normalize(L+E);//半角向量
+			vec3 N = normalize(u_NormalMat * a_Normal);//计算观察坐标系下法向
+			vec3 ambient = u_AmbientProduct;//环境反射分量
+			float Kd = max(dot(L, N), 0.0);//漫反射分量
+			vec3 diffuse = Kd * u_DiffuseProduct;
+			vec3 specular;//镜面反射分量
+			if(Kd == 0.0){
+				specular = vec3(0.0, 0.0, 0.0);
+			}else{
+				float Ks = pow(max(dot(N, H), 0.0), u_Shininess);//慢反射分量
+				specular = Ks * u_SpecularProduct;
+			}
+			gl_Position = u_Projection * vec4(pos, 1.0);//裁剪坐标系下顶点坐标
+			v_Color = ambient + diffuse + specular;//得到最终颜色
+		}
+		</script>
+		
+		<!--片元Shader程序-->
+		<script id="fragment-vShading" type="x-shader/x-fragment">
+		precision mediump float;//浮点数精度为中等
+		varying vec3 v_Color;//插值得到片元颜色
+		void main(){
+			gl_FragColor = vec4(v_Color, 1.0);
+		}
+		</script>
+		
+		<!--片元光照计算-->
+		<!--顶点Shader程序   PAGE9  -->
+		<script id="vertex-fShading" type="x-shader/x-vertex">
+		attribute vec3 a_Position;	//输入三维顶点坐标 建模坐标系 
+		attribute vec3 a_Normal;	//顶点法向 建模坐标系）
+		varying vec3 v_fN;			//法向 观察坐标系
+		varying vec3 v_fE;			//观察向量 观察坐标系
+		varying vec3 v_fL;			//光照向量 观察坐标系
+		uniform mat4 u_matModel;	//模型矩阵
+		uniform mat4 u_matView;		//观察矩阵
+		uniform mat4 u_Projection;	//投影矩阵
+		uniform mat3 u_NormalMat;	//法向变换矩阵
+		uniform vec4 u_LightPosition;//光源位置/方向 世界坐标系
+
+		void main(){
+			//将顶点坐标转到观察坐标系下 在观察坐标系计算光照
+			vec3 pos = (u_matView * u_matModel * vec4(a_Position,1.0)).xyz;
+			v_fE = normalize(-pos);//观察者方向向量
+			//计算观察坐标系下法向量
+			v_fN = normalize(u_NormalMat * a_Normal);
+			v_fL = (u_matView * u_LightPosition).xyz;
+			if(u_LightPosition.w != 0.0){//近距离光源
+				v_fL = v_fL-pos.xyz;
+			}
+			v_fL = normalize(v_fL);	
+			//裁剪坐标系下顶点坐标
+			gl_Position = u_Projection * vec4(pos,1.0);
+		}
+		</script>
+		
+		<!--片元Shader程序-->
+		<script id="fragment-fShading" type="x-shader/x-fragment">
+			precision mediump float;//浮点数精度为中等
+			varying vec3 v_fN;		//法向 观察坐标系
+			varying vec3 v_fE;		//观察向量 观察坐标系
+			varying vec3 v_fL;		//光照向量 观察坐标系
+			uniform float u_Shininess;//高光系数
+			//光源亮度与材质反射系数的乘积
+			uniform vec3 u_AmbientProduct,u_DiffuseProduct,u_SpecularProduct;
+			
+			void main(){
+				//归一化输入向量
+				vec3 N = normalize(v_fN);
+				vec3 E = normalize(v_fE);
+				vec3 L = normalize(v_fL);
+				vec3 H = normalize(L + E);//半角向量
+				vec3 ambient = u_AmbientProduct;//环境反射分量
+				float Kd = max(dot(L, N), 0.0);//漫反射分量
+				vec3 diffuse = Kd * u_DiffuseProduct;
+				vec3 specular;//镜面反射分量
+				if(Kd == 0.0){
+					specular = vec3 (0.0, 0.0, 0.0);
+				}else{
+					float Ks = pow(max(dot(N, H), 0.0), u_Shininess);
+					specular = Ks * u_SpecularProduct;
+				}
+				//得到最终颜色
+				gl_FragColor = vec4(ambient + diffuse + specular, 1.0);
+			}
+		</script>
+		
+		<!--下面是辅助我们进行程序编写的3个JavaScript程序-->
+		<script type="text/javascript" src="./Common/webgl-utils.js"></script>
+		<script type="text/javascript" src="./Common/initShaders.js"></script>
+		<script type="text/javascript" src="./Common/MV.js"></script>
+		<!--主程序-->
+		<script type="text/javascript" src="42CSM_LightShading.js"></script>
+	</body>
+</html>
