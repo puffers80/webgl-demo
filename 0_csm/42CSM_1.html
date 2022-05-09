@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html>
+	<head><!--文档头部-->
+		<meta charset = "utf-8">
+		<title>0_CSM</title>
+	</head>
+	
+	<body><!--文档主体-->
+		<canvas id="webgl" width="600" height="600">
+		sorry,浏览器不支持HTML5的canvas元素！<!--出错显示此句-->
+		</canvas>
+		
+		<!--顶点Shader程序-->
+		<script id="vertex-shader" type="x-shader/x-vertex">
+		attribute vec4 a_Position;//顶点位置属性
+		attribute vec4 a_Color;//顶点颜色属性
+		varying vec4 v_Color;//输出颜色属性		
+		void main(){
+			gl_Position = a_Position;
+			v_Color = a_Color;
+		}
+		</script>
+		<!--片元Shader程序-->
+		<script id="fragment-shader" type="x-shader/x-fragment">
+		precision mediump float;//浮点数精度为中等
+		varying vec4 v_Color;//输入颜色属性
+		void main(){
+			gl_FragColor=v_Color;//指定片元颜色(白1111.0)
+		}
+		</script>
+		<!--以下三辅助程序编写的三个JavaScrip程序-->
+		<script type="text/javascript" src="./Common/webgl-utils.js"></script>
+		<script type="text/javascript" src="./Common/initShaders.js"></script>
+		<script type="text/javascript" src="./Common/MV.js"></script>
+		<!--主程序，JS文件名修改为与本HTML文件名一致-->
+		<script type="text/javascript" src="42CSM_1.js"></script>
+	</body>
+</html>
