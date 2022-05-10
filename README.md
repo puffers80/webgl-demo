@@ -1,5 +1,5 @@
 # webgl-demo
-个人创新demo+实现webgl各类功能</Br>
+实现webgl各类基础功能+个人创新demo</Br>
 0-个人代号</Br>
 1-三角方块基础</Br>
 2-分形图形绘制</Br>
